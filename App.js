@@ -21,14 +21,7 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      markers: [
-        {
-          key: 1,
-          coordinate: { latitude: 50.2813, longitude: 19.56503 },
-          title: " Marker m1",
-          description: "Opis marker1 ",
-        },
-      ],
+      markers: [],
       region: {
         latitude: 50.2813,
         longitude: 19.56503,
@@ -37,6 +30,7 @@ export default class App extends Component {
       },
     };
     this.onMapPress = this.onMapPress.bind(this);
+    this.inputPress = this.inputPress.bind(this);
   }
 
   generateMarkers(fromCoordinate) {
@@ -51,6 +45,41 @@ export default class App extends Component {
       key: `key${id++}`,
     };
     result.push(newMarker);
+    for (var value in this.state.markers) {
+      console.log(
+        "Index in array: " + value + " = " + this.state.markers[value]
+      );
+    }
+    return result;
+  }
+  generateMarkers2(myData) {
+    const result = [];
+    let { id, lat, longitude, s, idName, idIndex } = myData;
+    console.log(`jestem w generateMarkers2 `);
+
+    for (var value in myData) {
+      // console.log(`jestem w for `);
+      // console.log("Index in array: " + value + " = " + myData[value].id);
+      // console.log("Index in array: " + value + " = " + myData[value].lat);
+      // console.log("Index in array: " + value + " = " + myData[value].longitude);
+      // console.log("Index in array: " + value + " = " + myData[value].s);
+      // console.log("Index in array: " + value + " = " + myData[value].idName);
+      // console.log("Index in array: " + value + " = " + myData[value].idIndex);
+      const lat = myData[value].lat;
+      const longitude = myData[value].longitude;
+
+      const newMarker = {
+        coordinate: {
+          latitude: parseFloat(lat),
+          longitude: parseFloat(longitude),
+        },
+        key: myData[value].id,
+        title: myData[value].idName,
+        description: myData[value].idIndex,
+      };
+      console.log(`newMarke ${JSON.stringify(newMarker)}`);
+      result.push(newMarker);
+    }
 
     return result;
   }
@@ -63,10 +92,39 @@ export default class App extends Component {
       ],
     });
   }
+  inputPress() {
+    console.log(`jestem w input press`);
+    axios
+      .get(
+        `https://busmapa.ct8.pl/getBus.php?idName=` +
+          this.state.idName +
+          `&idIndex=` +
+          this.state.idIndex
+      )
+      .then((result) => {
+        console.log("axios success '\n' " + JSON.stringify(result.data));
+        const myData = result.data;
+
+        console.log(`teraz setState`);
+        this.setState({
+          markers: [...this.state.markers, ...this.generateMarkers2(myData)],
+        });
+
+        console.log(`wyświetla markers`);
+        for (var value in this.state.markers) {
+          console.log(
+            "Index in array: " + value + " = " + this.state.markers[value]
+          );
+        }
+      })
+      .catch((err) => {
+        console.log("axios failed " + err);
+      });
+  }
 
   render() {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <MapView
           provider={this.props.provider}
           style={styles.map}
@@ -75,22 +133,30 @@ export default class App extends Component {
         >
           {this.state.markers.map((marker) => (
             <Marker
-              title={marker.key}
+              title={marker.title}
+              description={marker.description}
               key={marker.key}
               coordinate={marker.coordinate}
             />
           ))}
         </MapView>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={() => this.setState({ markers: [] })}>
-            <Text>Tap to create 100 markers</Text>
+          <TouchableOpacity
+            onPress={() => this.inputPress()}
+            style={styles.bubble}
+          >
+            <Text>zapytanie do bazy</Text>
           </TouchableOpacity>
-
-          {/* <TouchableOpacity onPress={() => onMapPress(50.2893, 19.56593)}>
-            <Text>Tap a marker</Text>
-          </TouchableOpacity> */}
         </View>
-      </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            onPress={() => this.setState({ markers: [] })}
+            style={styles.bubble}
+          >
+            <Text>usuń</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 }
@@ -126,7 +192,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    marginVertical: 40,
+    marginVertical: 20,
     backgroundColor: "white",
   },
 });
