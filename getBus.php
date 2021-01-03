@@ -27,7 +27,7 @@ $my_date = date("Y-m-d");
 $idName = $_GET["idName"];
 $idIndex = $_GET["idIndex"];
 
-if($result = mysqli_query($link,"SELECT * FROM `maps_records` WHERE `idName` GROUP BY `idName` ORDER BY `idName` DESC LIMIT 10")){
+if($result = mysqli_query($link,"SELECT * FROM `maps_records` WHERE `idName`= '$idName' GROUP BY `idIndex` order by `idName` DESC")){
     while($row = mysqli_fetch_assoc($result)) {
         $id = $row['id'];
         $my_time = $row['time'];

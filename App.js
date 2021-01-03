@@ -15,8 +15,9 @@ import {
 import MapView, { Marker, ProviderPropType } from "react-native-maps";
 const { width, height } = Dimensions.get("window");
 const axios = require("axios");
-let id = 0;
+
 const ASPECT_RATIO = width / height;
+
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -25,46 +26,16 @@ export default class App extends Component {
       region: {
         latitude: 50.2813,
         longitude: 19.56503,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
       },
     };
-    this.onMapPress = this.onMapPress.bind(this);
     this.inputPress = this.inputPress.bind(this);
-  }
-
-  generateMarkers(fromCoordinate) {
-    const result = [];
-    const { latitude, longitude } = fromCoordinate;
-
-    const newMarker = {
-      coordinate: {
-        latitude: latitude + 0.001,
-        longitude: longitude + 0.001,
-      },
-      key: `key${id++}`,
-    };
-    result.push(newMarker);
-    for (var value in this.state.markers) {
-      console.log(
-        "Index in array: " + value + " = " + this.state.markers[value]
-      );
-    }
-    return result;
   }
   generateMarkers2(myData) {
     const result = [];
-    let { id, lat, longitude, s, idName, idIndex } = myData;
     console.log(`jestem w generateMarkers2 `);
-
     for (var value in myData) {
-      // console.log(`jestem w for `);
-      // console.log("Index in array: " + value + " = " + myData[value].id);
-      // console.log("Index in array: " + value + " = " + myData[value].lat);
-      // console.log("Index in array: " + value + " = " + myData[value].longitude);
-      // console.log("Index in array: " + value + " = " + myData[value].s);
-      // console.log("Index in array: " + value + " = " + myData[value].idName);
-      // console.log("Index in array: " + value + " = " + myData[value].idIndex);
       const lat = myData[value].lat;
       const longitude = myData[value].longitude;
 
@@ -80,48 +51,34 @@ export default class App extends Component {
       console.log(`newMarke ${JSON.stringify(newMarker)}`);
       result.push(newMarker);
     }
-
     return result;
   }
+  inputPress(idName) {
+    console.log(`jestem w input press`);
+    console.log(`idName w press ${idName}`);
 
-  onMapPress(e) {
-    this.setState({
-      markers: [
-        ...this.state.markers,
-        ...this.generateMarkers(e.nativeEvent.coordinate),
-      ],
+    async function asyncFunc(idName) {
+      try {
+        const response = await axios.get(
+          `https://busmapa.ct8.pl/getBus.php?idName=` + idName
+        );
+        return response;
+      } catch (error) {
+        console.log("error", error);
+      }
+    }
+    const myData = asyncFunc(idName);
+    myData.then((response) => {
+      console.log("axios success2  " + JSON.stringify(response.data));
+      console.log(`teraz setState`);
+      this.setState({
+        markers: [
+          ...this.state.markers,
+          ...this.generateMarkers2(response.data),
+        ],
+      });
     });
   }
-  inputPress() {
-    console.log(`jestem w input press`);
-    axios
-      .get(
-        `https://busmapa.ct8.pl/getBus.php?idName=` +
-          this.state.idName +
-          `&idIndex=` +
-          this.state.idIndex
-      )
-      .then((result) => {
-        console.log("axios success '\n' " + JSON.stringify(result.data));
-        const myData = result.data;
-
-        console.log(`teraz setState`);
-        this.setState({
-          markers: [...this.state.markers, ...this.generateMarkers2(myData)],
-        });
-
-        console.log(`wyświetla markers`);
-        for (var value in this.state.markers) {
-          console.log(
-            "Index in array: " + value + " = " + this.state.markers[value]
-          );
-        }
-      })
-      .catch((err) => {
-        console.log("axios failed " + err);
-      });
-  }
-
   render() {
     return (
       <SafeAreaView style={styles.container}>
@@ -129,7 +86,6 @@ export default class App extends Component {
           provider={this.props.provider}
           style={styles.map}
           initialRegion={this.state.region}
-          onPress={this.onMapPress}
         >
           {this.state.markers.map((marker) => (
             <Marker
@@ -140,27 +96,28 @@ export default class App extends Component {
             />
           ))}
         </MapView>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            onPress={() => this.inputPress()}
-            style={styles.bubble}
-          >
-            <Text>zapytanie do bazy</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            onPress={() => this.setState({ markers: [] })}
-            style={styles.bubble}
-          >
-            <Text>usuń</Text>
-          </TouchableOpacity>
+        <View style={styles.buttonContainer2}>
+          <Text style={{ padding: 10, fontSize: 20 }}>
+            Identyfikator linii:{" "}
+          </Text>
+          <TextInput
+            style={{ padding: 10, fontSize: 20 }}
+            editable={true}
+            selectionColor={"blue"}
+            underlineColorAndroid={"gray"}
+            placeholder="?"
+            onSubmitEditing={(event) => {
+              console.log(`idName: ${event.nativeEvent.text}`);
+              this.setState({ idName: event.nativeEvent.text });
+              this.setState({ markers: [] });
+              this.inputPress(event.nativeEvent.text);
+            }}
+          ></TextInput>
         </View>
       </SafeAreaView>
     );
   }
 }
-
 App.propTypes = {
   provider: ProviderPropType,
 };
@@ -191,6 +148,11 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   buttonContainer: {
+    flexDirection: "row",
+    marginVertical: 20,
+    backgroundColor: "white",
+  },
+  buttonContainer2: {
     flexDirection: "row",
     marginVertical: 20,
     backgroundColor: "white",
