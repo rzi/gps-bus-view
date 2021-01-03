@@ -44,7 +44,7 @@ export default class App extends Component {
           latitude: parseFloat(lat),
           longitude: parseFloat(longitude),
         },
-        key: myData[value].id,
+        key: myData[value].time,
         title: myData[value].idName,
         description: myData[value].idIndex,
       };
