@@ -10,13 +10,16 @@ import {
   FlatList,
   SafeAreaView,
   Dimensions,
+  
 } from "react-native";
-
+import RNPickerSelect from 'react-native-picker-select';
 import MapView, { Marker, ProviderPropType } from "react-native-maps";
 const { width, height } = Dimensions.get("window");
 const axios = require("axios");
 
 const ASPECT_RATIO = width / height;
+let items=[];
+
 
 export default class App extends Component {
   constructor(props) {
@@ -31,7 +34,32 @@ export default class App extends Component {
       },
     };
     this.inputPress = this.inputPress.bind(this);
+
+    const myList = takeidName()    
+    myList.then((response) => {
+      console.log("axios success  " + JSON.stringify(response.data));
+      console.log(`jestem w myList ` +response.data.length);
+
+      for (let i = 0; i < response.data.length; i++) {
+      items.push({label:response.data[i] , value: +response.data[i]})
+      console.log("label"+ items[i].label + " label "+response.data[i])
+      
+      }
+      
+    });
+    async function takeidName(){
+      try {
+        const response = await axios.get(
+          `https://busmapa.ct8.pl/getAllBus.php`
+        );
+        return response;
+      } catch (error) {
+        console.log("error", error);
+      }
+    }    
   }
+
+
   generateMarkers2(myData) {
     const result = [];
     console.log(`jestem w generateMarkers2 `);
@@ -79,6 +107,7 @@ export default class App extends Component {
       });
     });
   }
+
   render() {
     return (
       <SafeAreaView style={styles.container}>
@@ -113,7 +142,21 @@ export default class App extends Component {
               this.inputPress(event.nativeEvent.text);
             }}
           ></TextInput>
+         
         </View>
+        <Text style={styles.buttonContainer2}>Wybierz szukaną linię: </Text>
+        <View style={styles.buttonContainer2}>
+        <RNPickerSelect
+            placeholder={{
+              label: 'wybierz...',
+              value: null,
+              color: 'red',
+            }}
+            onValueChange={(value) => this.inputPress(value)}
+            items={items}
+        />
+        </View>
+        
       </SafeAreaView>
     );
   }
@@ -124,7 +167,7 @@ App.propTypes = {
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
     alignItems: "center",
   },
   map: {
@@ -154,7 +197,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer2: {
     flexDirection: "row",
-    marginVertical: 20,
+    marginVertical: 5,
     backgroundColor: "white",
   },
 });
