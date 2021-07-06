@@ -66,13 +66,14 @@ export default class App extends Component {
     for (var value in myData) {
       const lat = myData[value].lat;
       const longitude = myData[value].longitude;
-
+      let myTime =Date.now(); //unique key as timestamp (now);
+      console.log("time: "+myTime);
       const newMarker = {
         coordinate: {
           latitude: parseFloat(lat),
           longitude: parseFloat(longitude),
         },
-        key: myData[value].time,
+        key: myData[value].myTime,
         title: myData[value].idName,
         description: myData[value].idIndex,
       };
@@ -99,9 +100,10 @@ export default class App extends Component {
     myData.then((response) => {
       console.log("axios success2  " + JSON.stringify(response.data));
       console.log(`teraz setState`);
+      //...this.state.markers,
       this.setState({
         markers: [
-          ...this.state.markers,
+          
           ...this.generateMarkers2(response.data),
         ],
       });
